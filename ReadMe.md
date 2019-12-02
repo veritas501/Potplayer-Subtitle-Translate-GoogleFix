@@ -10,11 +10,11 @@
 
 2. 把修复后的脚本放进去
 
-![image-20191202155636403](../../Notebook/Pics/ReadMe.assets/image-20191202155636403.png)
+![image-20191202155636403](assets/image-20191202155636403.png)
 
 3. 重启Potplayer
 
-## 效果
+## 效果 - 快乐看生肉
 
 - Before
 
@@ -23,3 +23,4 @@
 - After
 
 ![image-20191202160034979](assets/image-20191202160034979.png)
+

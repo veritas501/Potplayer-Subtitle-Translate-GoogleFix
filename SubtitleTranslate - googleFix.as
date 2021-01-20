@@ -13,43 +13,11 @@
 // array<string> GetDstLangs() 												-> get target language
 // string Translate(string Text, string &in SrcLang, string &in DstLang) 	-> do translate !!
 
-string JsonParseOld(string json)
-{
-	JsonReader Reader;
-	JsonValue Root;
-	string ret = "";	
-	
-	if (Reader.parse(json, Root) && Root.isArray())
-	{
-		for (int i = 0, len = Root.size(); i < len; i++)
-		{
-			JsonValue child1 = Root[i];
-			
-			if (child1.isArray())
-			{
-				for (int j = 0, len = child1.size(); j < len; j++)
-				{		
-					JsonValue child2 = child1[j];
-					
-					if (child2.isArray())
-					{
-						JsonValue item = child2[0];
-				
-						if (item.isString()) ret = ret + item.asString();
-					}
-				}
-				break;
-			}
-		}
-	} 
-	return ret;
-}
-
 string JsonParseNew(string json)
 {
 	JsonReader Reader;
 	JsonValue Root;
-	string ret = "";	
+	string ret = "";
 	
 	if (Reader.parse(json, Root) && Root.isObject())
 	{
@@ -76,6 +44,26 @@ string JsonParseNew(string json)
 		}
 	} 
 	return ret;
+}
+
+string JsonParse_for_openapi(string json)
+{
+	JsonReader Reader;
+	JsonValue Root;
+	string err_msg = "translate fail :(";
+	
+	if (Reader.parse(json, Root))
+	{
+		string sub_json = Root[0][2].asString();
+		if (Reader.parse(sub_json, Root))
+		{
+			string ans = Root[1][0][0][5][0][0].asString();
+			return ans;
+		}
+			
+		return err_msg;
+	} 
+	return err_msg;
 }
 
 array<string> LangTable = 
@@ -190,6 +178,8 @@ array<string> LangTable =
 };
 
 string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36";
+string TranslateHost = "translate.google.cn";
+string RPC_ID = 'MkEWBc';
 
 string GetTitle()
 {
@@ -263,62 +253,17 @@ array<string> split(string str, string delimiter)
 	return parts;
 }
 
-string CalcTK(string s,string tkk) {
-	array<string> tkks = split(tkk,".");
-	uint64 t0,t1,t0bak;
-	t0 = parseUInt(tkks[0]);
-	t0bak=t0;
-	t1 = parseUInt(tkks[1]);
-	for(uint i=0;i<s.length();i++){
-		t0 += s[i];
-		t0 &= 0xffffffff;
-		t0 += t0<<10;
-		t0 &= 0xffffffff;
-        t0 ^= t0>>>6;
-		t0 &= 0xffffffff;
-	}
-	t0 += t0 << 3;
-	t0 &= 0xffffffff;
-    t0 ^= t0 >>>11;
-	t0 &= 0xffffffff;
-    t0 += t0 <<15;
-	t0 &= 0xffffffff;
-	t0 ^= t1;
-	if(t0<0){
-        t0 = (t0 & 0x7ffffffff) + 0x80000000;
-    }
-    t0 %= 1000000;
-	t0bak ^= t0;
-	return formatUInt(t0)+"."+formatUInt(t0bak);
-}
-
-string GetTkk(string htmlData){
-	int idx = htmlData.findFirst("tkk:'", 0);
-	htmlData = htmlData.substr(idx+5);
-	idx = htmlData.findFirst("'", 0);
-	htmlData = htmlData.substr(0,idx);
-	return htmlData;
-}
-
-
-string tkk = "";
-
 string Translate(string Text, string &in SrcLang, string &in DstLang)
 {
-//HostOpenConsole();	// for debug
-	if(tkk.length() <= 0){
-		string getTkkUrl = "https://translate.google.cn";
-		string html = HostUrlGetString(getTkkUrl, UserAgent);
-		tkk = GetTkk(html);
-	}
+	//HostOpenConsole();	// for debug
 
 	if (SrcLang.length() <= 0) SrcLang = "auto";
 	SrcLang.MakeLower();
 	
-	string enc = HostUrlEncode(Text);
-	
+	// use user's api_key
 	if (api_key.length() > 0)
 	{
+		string enc = HostUrlEncode(Text);
 		string url = "https://translation.googleapis.com/language/translate/v2?target=" + DstLang + "&q=" + enc;
 		if (!SrcLang.empty() && SrcLang != "auto") url = url + "&source=" + SrcLang;
 		url = url + "&key=" + api_key;
@@ -332,11 +277,27 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		}	
 	}
 	
-//	API.. Always UTF-8
-	string tk = CalcTK(Text,tkk);
-	string url = "https://translate.google.cn/translate_a/single?client=webapp&sl="+SrcLang+"&tl="+DstLang+"&dt=t&tk="+tk+"&q="+enc;
-	string text = HostUrlGetString(url, UserAgent);
-	string ret = JsonParseOld(text);
+	// use open api(for free)
+	string rpc_url = "https://"+TranslateHost+"/_/TranslateWebserverUi/data/batchexecute?rpcids="+RPC_ID+"&bl=boq_translate-webserver_20201207.13_p0&soc-app=1&soc-platform=1&soc-device=1&rt=c";
+
+	string post_data1 = "[[[\"MkEWBc\",\"[[\\\"";
+	string post_data2 = "\\\",\\\""+SrcLang+"\\\",\\\""+DstLang+"\\\",true],[null]]\",null,\"generic\"]]]";
+	Text.replace("\\","\\\\");
+	Text.replace("\"","\\\"");
+	Text.replace("\\","\\\\");
+	Text.replace("\"","\\\"");
+	string enc_text = Text;
+	string post_data = "f.req="+HostUrlEncode(post_data1+enc_text+post_data2);
+
+	string SendHeader = "Content-Type: application/x-www-form-urlencoded";
+	
+	string text = HostUrlGetString(rpc_url, UserAgent, SendHeader, post_data);
+	text.replace("\n","");
+	int start_pos = text.findFirst("[[", 0);
+	int end_pos = text.findFirst("]]", 0);
+	text=text.substr(start_pos, end_pos - start_pos+2);
+
+	string ret = JsonParse_for_openapi(text);
 	if (ret.length() > 0)
 	{
 		SrcLang = "UTF8";

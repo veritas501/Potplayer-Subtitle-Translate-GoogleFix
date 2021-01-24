@@ -1,4 +1,4 @@
-﻿/*
+/*
 	real time subtitle translate for PotPlayer using google API
 */
 
@@ -57,7 +57,12 @@ string JsonParse_for_openapi(string json)
 		string sub_json = Root[0][2].asString();
 		if (Reader.parse(sub_json, Root))
 		{
-			string ans = Root[1][0][0][5][0][0].asString();
+			string ans ="";
+			JsonValue translations = Root[1][0][0][5];
+			for (int i = 0, len = translations.size(); i < len; i++)
+			{
+				ans += translations[i][0].asString();
+			}
 			return ans;
 		}
 			
@@ -286,6 +291,9 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	Text.replace("\"","\\\"");
 	Text.replace("\\","\\\\");
 	Text.replace("\"","\\\"");
+	Text.replace("\n","\\\\n");
+	Text.replace("\r","\\\\r");
+	Text.replace("\t","\\\\t");
 	string enc_text = Text;
 	string post_data = "f.req="+HostUrlEncode(post_data1+enc_text+post_data2);
 

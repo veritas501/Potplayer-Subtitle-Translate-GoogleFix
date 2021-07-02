@@ -51,7 +51,8 @@ string JsonParse_for_openapi(string json)
 	JsonReader Reader;
 	JsonValue Root;
 	string err_msg = "translate fail :(";
-	
+	// HostPrintUTF8(json);
+
 	if (Reader.parse(json, Root))
 	{
 		string sub_json = Root[0][2].asString();
@@ -73,113 +74,12 @@ string JsonParse_for_openapi(string json)
 
 array<string> LangTable = 
 {
-	"af",
-	"sq",
-	"am",
-	"ar",
-	"hy",
-	"az",
-	"eu",
-	"be",
-	"bn",
-	"bh",
-	"bs",
-	"bg",
-	"my",
-	"ca",
-	"ceb",
-// 	"chr",
-//	"zh",
-	"zh-CN",
-	"zh-TW",
-	"hr",
-	"cs",
-	"da",
-// 	"dv",
-	"nl",
-	"en",
-	"eo",
-	"et",
-	"tl",
-	"fi",
-	"fr",
-	"gl",
-	"ka",
-	"de",
-	"el",
-// 	"gn",
-	"gu",
-	"ht",
-	"ha",
-	"iw",
-	"hi",
-	"hmn",
-	"hu",
-	"is",
-	"ig",
-	"id",
-	"ga",
-// 	"iu",
-	"it",
-	"ja",
-	"jw",
-	"kn",
-	"kk",
-	"km",
-	"ko",
-	"ku",
-	"ky",
-	"lo",
-	"la",
-	"lv",
-	"lt",
-	"mk",
-	"ms",
-	"ml",
-	"mt",
-	"mi",
-	"mr",
-	"mn",
-	"ne",
-	"no",
-//	"or",
-	"ps",
-	"fa",
-	"pl",
-	"pt",
-	"pa",
-	"ro",
-//	"romanji",
-	"ru",
-//	"sa",
-	"sr",
-	"sd",
-	"st",
-	"si",
-	"sk",
-	"sl",
-	"so",
-	"es",
-	"sw",
-	"sv",
-	"sw",
-	"tg",
-	"ta",
-//	"tl",
-	"te",
-	"th",
-//	"bo",
-	"tr",
-	"uk",
-	"ur",
-	"uz",
-//	"ug",
-	"vi",
-	"cy",
-	"xh",
-	"yi",
-	"yo",
-	"zu"
+	"af", "sq", "am", "ar", "hy", "az", "eu", "be", "bn", "bh", "bs", "bg", "my", "ca", "ceb",
+	"zh-CN","zh-TW","hr","cs","da","nl","en","eo","et","tl","fi","fr","gl","ka","de","el","gu",
+	"ht","ha","iw","hi","hmn","hu","is","ig","id","ga","it","ja","jw","kn","kk","km","ko","ku",
+	"ky","lo","la","lv","lt","mk","ms","ml","mt","mi","mr","mn","ne","no","ps","fa","pl","pt",
+	"pa","ro","ru","sr","sd","st","si","sk","sl","so","es","sw","sv","sw","tg","ta","te","th",
+	"tr","uk","ur","uz","vi","cy","xh","yi","yo","zu"
 };
 
 string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36";
@@ -260,7 +160,7 @@ array<string> split(string str, string delimiter)
 
 string Translate(string Text, string &in SrcLang, string &in DstLang)
 {
-	//HostOpenConsole();	// for debug
+	// HostOpenConsole();	// for debug
 
 	if (SrcLang.length() <= 0) SrcLang = "auto";
 	SrcLang.MakeLower();
@@ -283,7 +183,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	}
 	
 	// use open api(for free)
-	string rpc_url = "https://"+TranslateHost+"/_/TranslateWebserverUi/data/batchexecute?rpcids="+RPC_ID+"&bl=boq_translate-webserver_20201207.13_p0&soc-app=1&soc-platform=1&soc-device=1&rt=c";
+	string rpc_url = "https://"+TranslateHost+"/_/TranslateWebserverUi/data/batchexecute?rpcids="+RPC_ID+"&bl=boq_translate-webserver_20210630.09_p0&soc-app=1&soc-platform=1&soc-device=1&rt=c";
 
 	string post_data1 = "[[[\"MkEWBc\",\"[[\\\"";
 	string post_data2 = "\\\",\\\""+SrcLang+"\\\",\\\""+DstLang+"\\\",true],[null]]\",null,\"generic\"]]]";
@@ -300,11 +200,13 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	string SendHeader = "Content-Type: application/x-www-form-urlencoded";
 	
 	string text = HostUrlGetString(rpc_url, UserAgent, SendHeader, post_data);
+	
 	text.replace("\n","");
 	int start_pos = text.findFirst("[[", 0);
-	int end_pos = text.findFirst("]]", 0);
-	text=text.substr(start_pos, end_pos - start_pos+2);
-
+	int end_pos = text.findLast("]]", -1);
+	text=text.substr(start_pos, end_pos - start_pos);
+	end_pos = text.findLast("]]", -1);
+	text=text.substr(0, end_pos+2);
 	string ret = JsonParse_for_openapi(text);
 	if (ret.length() > 0)
 	{

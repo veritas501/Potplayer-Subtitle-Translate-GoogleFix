@@ -82,8 +82,8 @@ array<string> LangTable =
 	"tr","uk","ur","uz","vi","cy","xh","yi","yo","zu"
 };
 
-string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36";
-string TranslateHost = "translate.google.cn";
+string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36";
+string TranslateHost = "translate.google.com";
 string RPC_ID = 'MkEWBc';
 
 string GetTitle()
@@ -98,7 +98,7 @@ string GetVersion()
 
 string GetDesc()
 {
-	return "https://translate.google.cn";
+	return "https://translate.google.com";
 }
 
 string GetLoginTitle()
@@ -183,7 +183,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	}
 	
 	// use open api(for free)
-	string rpc_url = "https://"+TranslateHost+"/_/TranslateWebserverUi/data/batchexecute?rpcids="+RPC_ID+"&bl=boq_translate-webserver_20210630.09_p0&soc-app=1&soc-platform=1&soc-device=1&rt=c";
+	string rpc_url = "https://"+TranslateHost+"/_/TranslateWebserverUi/data/batchexecute?rpcids="+RPC_ID+"&bl=boq_translate-webserver_20221005.09_p0&soc-app=1&soc-platform=1&soc-device=1&rt=c";
 
 	string post_data1 = "[[[\"MkEWBc\",\"[[\\\"";
 	string post_data2 = "\\\",\\\""+SrcLang+"\\\",\\\""+DstLang+"\\\",true],[null]]\",null,\"generic\"]]]";
